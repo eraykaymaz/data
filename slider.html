@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sescibaba Slider</title>
 
 <style>
@@ -34,6 +34,7 @@ body {
   width: 150px;
   text-align: center;
   padding: 25px 0 20px;
+  box-sizing: border-box;
 }
 
 .slide img {
@@ -45,7 +46,7 @@ body {
 }
 
 .slide:hover img {
-  transform: scale(1.07);
+  transform: scale(1.08);
 }
 
 .slide p {
@@ -55,6 +56,7 @@ body {
   font-weight: 700;
 }
 
+/* Alt ayraç (3D çizgi) */
 .slider-divider {
   width: 92%;
   height: 2px;
@@ -65,11 +67,13 @@ body {
 
 .info-text {
   text-align: center;
+  padding: 30px;
   font-size: 18px;
-  margin: 20px;
+  color: #444;
 }
 </style>
 </head>
+
 <body>
 
 <div class="slider-wrap">
@@ -78,56 +82,56 @@ body {
 <div class="slider-divider"></div>
 
 <script>
-// =========================
-//   URL’den kategori al
-// =========================
+// ===============================
+//  URL’den kategori alıyoruz
+// ===============================
 const url = new URL(window.location.href);
 const category = url.searchParams.get("cat");
 
-// Hiç kategori verilmezse:
 if (!category) {
   document.getElementById("track").innerHTML =
-    "<div class='info-text'>Kategori belirtilmedi: ?cat=KategoriAdı</div>";
+    "<div class='info-text'>Kategori belirtilmedi: ?cat=Kulaklık</div>";
 }
 
-// =========================
-//   Ana çalışma fonksiyonu
-// =========================
+// ===============================
+//  Ana Çalıştırma Fonksiyonu
+// ===============================
 (async () => {
-
   const map = await fetch("./data/category-map.json").then(r => r.json());
   const products = await fetch("./data/products.json").then(r => r.json());
-
   const track = document.getElementById("track");
 
+  // Kategori yoksa
   if (!map[category]) {
-    track.innerHTML = `<div class="info-text">${category} kategorisi bulunamadı.</div>`;
+    track.innerHTML = `<div class='info-text'>Kategori bulunamadı: ${category}</div>`;
     return;
   }
 
-  const relatedCats = map[category];
+  const related = map[category]; // 15 öneri kategori
 
-  // 15 öneri kategorinin ürünlerini topluyoruz
-  let list = [];
+  let productList = [];
 
-  for (let c of relatedCats) {
-    if (products[c] && products[c].length > 0) {
-      list.push(...products[c]);
+  // Her öneri kategorinin ürünlerini alıyoruz
+  for (let cat of related) {
+    if (products[cat] && products[cat].length > 0) {
+      productList.push(...products[cat]);
     }
   }
 
-  // Tekrarsız yap
-  list = [...new Set(list)];
-
-  if (list.length === 0) {
-    track.innerHTML = `<div class="info-text">${category} kategorisi için ürün eklenmemiş.</div>`;
+  // Ürünler yoksa
+  if (productList.length === 0) {
+    track.innerHTML =
+      `<div class='info-text'>${category} kategorisi için ürün eklenmemiş.</div>`;
     return;
   }
 
-  // =========================
-  //   Ürün bilgilerini API’den çek
-  // =========================
-  for (let link of list) {
+  // Tekrarsız yap
+  productList = [...new Set(productList)];
+
+  // ===============================
+  //  Ürün bilgilerini API'den çek
+  // ===============================
+  for (let link of productList) {
     const api =
       "https://yellow-fog-3fba.eray-kaymaz.workers.dev/?url=" +
       encodeURIComponent(link);
@@ -135,17 +139,17 @@ if (!category) {
     let d;
     try {
       d = await fetch(api).then(r => r.json());
-    } catch {
+    } catch (err) {
       continue;
     }
 
     track.innerHTML += `
-    <div class="slide">
-      <a href="${link}" target="_top">
-        <img src="${d.image}">
-        <p>${d.title}</p>
-      </a>
-    </div>
+      <div class="slide">
+        <a href="${link}" target="_top">
+          <img src="${d.image}" alt="${d.title}">
+          <p>${d.title}</p>
+        </a>
+      </div>
     `;
   }
 })();
